@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 """
-Author: Jonathan E. Rux
-Last Updated: 2022/04/20
+Author: Rux | RuxUnderscore
+Last Updated: 2024/06/26
 System Information Script in Python. If you have any ideas of things that can be added with the imports included, feel free to send recommendations. 
 
-Nonstandard Libraries to Ubuntu: python3-psutil 
+Nonstandard Libraries to Ubuntu: python3-psutil python3-cpuinfo
 """
 
 import os, subprocess as sp, psutil as psu, socket as s, time as t, platform as plat, math, cpuinfo

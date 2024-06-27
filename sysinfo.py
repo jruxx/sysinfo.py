@@ -101,8 +101,11 @@ def multilinePrint(list):
 # Note: Compatible with Fedora, Oracle Linux, RedHat, CentOS, and Ubuntu;
 # Add future compatibility here.
 def checkAvailableUpdates():
+    kern=os.popen("uname -r").read().strip()
     dist=os.popen("cat /etc/*-release | grep -i \"pretty\"").read()[13:-2].split()
-    if str(dist[0]) == ("Fedora" or "Oracle" or "RedHat" or "CentOS"):
+    if "WSL" in kern:
+        return "WSL - Update Count Not Available".split("\n")
+    elif str(dist[0]) == ("Fedora" or "Oracle" or "RedHat" or "CentOS"):
         updates=os.popen("yum updateinfo").read()[:-1].split('\n')[1:]
         if len(updates) != 0:
             return updates
@@ -112,7 +115,7 @@ def checkAvailableUpdates():
         updates=readFile("/var/lib/update-notifier/updates-available")[1:-1].split("\n")
         return updates
     else:
-        return "N/A"
+        return "N/A".split("\n")
 
 # Round up with configurable decimal place.
 # Note: Created to display round up <1 GB when to show on TB scale.
@@ -130,9 +133,18 @@ def round_up(n, decimals=0):
 def infoSystem():
     hostname=s.getfqdn()
     uptime=os.popen('uptime -p').read()[:-1].split(' ', 1)[1]
-    man=readFile("/sys/class/dmi/id/chassis_vendor")
-    productName=readFile("/sys/class/dmi/id/product_name")
-    sysVer=readFile("/sys/class/dmi/id/product_version")
+    if os.path.exists("/sys/class/dmi/id/chassis_vendor"):
+        man=readFile("/sys/class/dmi/id/chassis_vendor")
+    else:
+        man="N/A"
+    if os.path.exists("/sys/class/dmi/id/product_name"):
+        productName=readFile("/sys/class/dmi/id/product_name")
+    else:
+        productName="N/A"
+    if os.path.exists("/sys/class/dmi/id/product_version"):
+        sysVer=readFile("/sys/class/dmi/id/product_version")
+    else:
+        sysVer="N/A"
     machineType=checkHypervisor()
     # cpuName=os.popen('awk -F\':\' \'/^model name/ {print $2}\' /proc/cpuinfo | uniq | sed -e \'s/^[ \t]*//\'').read()[:-1]
     cpuName=cpuinfo.get_cpu_info()['brand']
@@ -197,9 +209,16 @@ def usageCPUMem():
 # Note: Runs slow, but may be able to convert to external libraries 
 # in the future if requested.
 def infoGPU():
-    gpuID=os.popen("lspci | egrep -i \"Nvidia|Intel|AMD|ATI\" | grep VGA | cut -d \" \" -f1").read().split("\n")
-    gpuInfo=os.popen("lspci | egrep -i \"Nvidia|Intel|AMD|ATI\" | grep VGA | awk -F: \'{print $3}\'").read()[:-1].split("\n")
-    gpuMem=gpuMemory(gpuID)
+    kernel=os.popen("uname -r").read().strip()
+    # print(f"    {kernel}")
+    if "WSL" not in kernel:
+        gpuID=os.popen("lspci | egrep -i \"Nvidia|Intel|AMD|ATI\" | egrep \"VGA\" | cut -d \" \" -f1").read().split("\n")
+        gpuInfo=os.popen("lspci | egrep -i \"Nvidia|Intel|AMD|ATI\" | egrep \"VGA\" | awk -F: \'{print $3}\'").read()[:-1].split("\n")
+        gpuMem=gpuMemory(gpuID)
+    elif "WSL" in kernel:
+        gpuID=os.popen("lspci | egrep -i \"Microsoft\" | egrep \"3D\" | cut -d \" \" -f1").read().split("\n")
+        gpuInfo="WSLg".split("\n")
+        gpuMem="N/A".split("\n")
     gpuDriver=gpuKernelDriver(gpuID)
     gpuKernel=gpuKernelMod(gpuID)
 
@@ -209,24 +228,24 @@ def infoGPU():
     # Information:                {gpuInfo}''')
     for index, line in enumerate(gpuInfo):
         if index == 0:
-            print(f'    Info:                      {line}')
+            print(f'    Info:                       {line.strip()}')
         else:
-            print(f'                               {line}')
+            print(f'                                {line.strip()}')
     for index, line in enumerate(gpuMem):
         if index == 0:
-            print(f'    Memory:             {line}')
+            print(f'    Memory:                     {line.strip()}')
         else:
-            print(f'                        {line}')
+            print(f'                                {line.strip()}')
     for index, line in enumerate(gpuDriver):
         if index == 0:
-            print(f'    Driver in Use:              {line}')
+            print(f'    Driver in Use:              {line.strip()}')
         else:
-            print(f'                                {line}')
+            print(f'                                {line.strip()}')
     for index, line in enumerate(gpuKernel):
         if index == 0:
-            print(f'    Kernel:                     {line}')
+            print(f'    Kernel:                     {line.strip()}')
         else:
-            print(f'                                {line}')
+            print(f'                                {line.strip()}')
 
 # MyriadX Information
 def infoMyriad():
